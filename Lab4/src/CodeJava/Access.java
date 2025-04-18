@@ -78,16 +78,15 @@ public class Access {
 		// displayStops(1);
 
 		// Task 2
-		// displayTripOffering();
+		displayTripOffering();
+		addTripOffering(3, "4/10/2025", "2:00PM", "3:00PM", "Driver1", "Bus1");
 		deleteTripOffering(3, "4/10/2025", "2:00PM");
-
+		displayTripOffering();
 	}
 
 	// inner join TripOffering (for ScheduledStartTime, ScheduledArrivalTime,
 	// DriverID, BusID) to Trip (for StartLocationName, DestinationName).
 
-	// Wants DriverID but schema only will provide Name. I will assume this is
-	// acceptable
 	static void displaySchedule(String myStartLocationName, String myDestinationName, String dateStr) {
 		try {
 			// Load the UCanAccess driver
@@ -155,6 +154,8 @@ public class Access {
 			e.printStackTrace();
 		}
 	}
+
+	// Trip Offering modification functions
 
 	static void displayTripOffering() {
 		try {
@@ -234,7 +235,6 @@ public class Access {
 			java.util.Date parsedUtilDate = sdf.parse(mydate);
 			Date sqlDate = new Date(parsedUtilDate.getTime());
 
-			// deleting from TripOffering first
 			String sqlTripOffering = "DELETE FROM TripOffering WHERE TripNumber = ? AND TripDate = ? AND ScheduledStartTime = ?";
 			try (PreparedStatement pstmt1 = connection.prepareStatement(sqlTripOffering)) {
 				pstmt1.setInt(1, myTripNumber);
@@ -244,14 +244,12 @@ public class Access {
 				System.out.println("Deleted " + rowsAffected1 + " row(s) from the TripOffering table.");
 			}
 
-			// // next deleting from trip
-			// String sqlTrip = "DELETE FROM Trip WHERE TripNumber = ?";
-			// try (PreparedStatement pstmt2 = connection.prepareStatement(sqlTrip)) {
-			// pstmt2.setInt(1, myTripNumber);
-			// int rowsAffected2 = pstmt2.executeUpdate();
-			// System.out.println("Deleted " + rowsAffected2 + " row(s) from the Trip
-			// table.");
-			// }
+			String sqlTrip = "DELETE FROM Trip WHERE TripNumber = ?";
+			try (PreparedStatement pstmt2 = connection.prepareStatement(sqlTrip)) {
+				pstmt2.setInt(1, myTripNumber);
+				int rowsAffected2 = pstmt2.executeUpdate();
+				System.out.println("Deleted " + rowsAffected2 + " row(s) from the Trip table.");
+			}
 		} catch (ClassNotFoundException e) {
 			System.out.println("UCanAccess driver not found: " + e.getMessage());
 		} catch (SQLException | ParseException e) {
