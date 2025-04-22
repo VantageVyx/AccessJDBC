@@ -3,51 +3,14 @@ package CodeJava;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
-import java.sql.Statement;
+// import java.sql.Statement;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Date;
 import java.text.SimpleDateFormat;
 import java.text.ParseException;
-/*
- * Stuff Code must do:
- * TASK 1
- * Display the schedule of all trips for a given StartLocationName and Destination Name and Date. 
- * MUST INCLUDE the ScheduledStartTime, ScheduledArrivalTime, DriverID, and BusID.
- * 
- * TASK 2
- * Edit the schedule, namely edit the table of Trip Offering:
- * 		1. Delete a trip offering specified by trip # and date and scheduled start time.
- * 
- *      2. Add a set of trip offerings assuming the values of all attributed are given (software asks if you have more trips to enter)
- * 
- * 
- *      3. Change the driver for a given trip offering (given TripNumber, Date, ScheduledStartTime)
- * 
- *      4. Change the bus for a given trip offering 
- * 
- * 
- * TASK 3
- * Display the stops of a given trip (attributes of the table TripStopInfo)
- * 
- * TASK 4
- * Display the weekly schedule of a given driver and date
- * 
- * TASK 5
- * Add a drive
- * 
- * TASK 6
- * Add a bus
- * 
- * TASK 7
- * Delete a bus
- * 
- * TASK 8
- * Record (insert) the actual data of a given trip offering specified by its key. The actual data include the attributes of the table ActualTripStopInfo.
- * 
- * 
- * Test Program using several test data for the above transactions.
- */
+
+import java.util.Scanner;
 
 /*
  * Personal Notes:
@@ -64,29 +27,50 @@ import java.text.ParseException;
  * java -cp "src/libs/*;src" CodeJava.Access
  */
 
+/*
+ * Trip, TripOffering, Bus, Driver, Stop, ActualTripStopInfo, TripStopInfo
+ *
+ */
+
 public class Access {
 	private static String databaseURL = "jdbc:ucanaccess://C:/Users/valde/Desktop/cs_classes/cs4350_pc/AccessJDBC/Lab4/src/Lab4Database.accdb";
 
 	public static void main(String[] args) {
 		// Task 1
-		System.out.println("Checking displaySchedule:");
-		displaySchedule("Oakland", "Alameda", "4/18/2025");
-
-		System.out.println("");
+		// System.out.println("Checking displaySchedule:");
+		// displaySchedule("Oakland", "Alameda", "4/18/2025");
 
 		// System.out.println("Checking displayStops:");
 		// displayStops(1);
 
 		// Task 2
+		// displayTripOffering();
+		// Part 3: Add a set of trip offerings assuming the values of all attributes
+		// (software asks if you have more trips to enter)
+		addTripOffering(1, "4/10/2025", "2:00PM", "3:00PM", "Driver1", "1");
+		// Part 2: Delete a trip offering and its associated trip
+		deleteTripOffering(1, "4/10/2025", "2:00PM");
 		displayTripOffering();
-		addTripOffering(3, "4/10/2025", "2:00PM", "3:00PM", "Driver1", "Bus1");
-		deleteTripOffering(3, "4/10/2025", "2:00PM");
-		displayTripOffering();
+
+		// Part 4: Change the driver for a given trip offering
+
+		// Add a set of trip offerings assuming the values of all attributes are given
+		// (software asks if you have more trips to enter)
+
+		// Scanner scanner = new Scanner(System.in);
+		// System.out.println("Main Menu:");
+		// System.out.println("----Trip Offering----");
+		// System.out.println("3. Add Trip Offering");
+		// System.out.println("4. Change Driver for Chosen Trip Offering");
+		// System.out.println("5. Change Bus for Chosen Trip Offering");
+		// System.out.println("6. Add a Driver");
+		// System.out.println("7. Delete a Bus");
+		// System.out.println("8. Record (Insert) actual data of a given trip offering
+		// specified by its key?");
 	}
 
 	// inner join TripOffering (for ScheduledStartTime, ScheduledArrivalTime,
 	// DriverID, BusID) to Trip (for StartLocationName, DestinationName).
-
 	static void displaySchedule(String myStartLocationName, String myDestinationName, String dateStr) {
 		try {
 			// Load the UCanAccess driver
@@ -167,19 +151,20 @@ public class Access {
 			System.out.println("Connected to the MS Access database");
 
 			String sqlTripOffering = "SELECT * FROM TripOffering";
-			try (Statement stmt = connection.createStatement(); ResultSet rs = stmt.executeQuery(sqlTripOffering)) {
-				while (rs.next()) {
-					int tripNumber = rs.getInt("TripNumber");
-					Date tripDate = rs.getDate("TripDate");
-					String schStartTime = rs.getString("ScheduledStartTime");
-					String schArrivalTime = rs.getString("ScheduledArrivalTime");
-					String driverID = rs.getString("DriverID");
-					String busID = rs.getString("BusID");
+			try (PreparedStatement pstmt = connection.prepareStatement(sqlTripOffering)) {
+				try (ResultSet rs = pstmt.executeQuery()) {
+					while (rs.next()) {
+						int tripNumber = rs.getInt("TripNumber");
+						Date tripDate = rs.getDate("TripDate");
+						String schStartTime = rs.getString("ScheduledStartTime");
+						String schArrivalTime = rs.getString("ScheduledArrivalTime");
+						String driverName = rs.getString("DriverName");
+						String busID = rs.getString("BusID");
 
-					System.out.println("TripNumber: " + tripNumber + ", TripDate: " + tripDate
-							+ ", ScheduledStartTime: "
-							+ schStartTime + ", ScheduledArrivalTime: " + schArrivalTime + ", DriverID: " + driverID
-							+ ", BusID: " + busID);
+						System.out.println("TripNumber: " + tripNumber + ", TripDate: " + tripDate
+								+ ", ScheduledStartTime: " + schStartTime + ", ScheduledArrivalTime: " + schArrivalTime
+								+ ", DriverName: " + driverName + ", BusID: " + busID);
+					}
 				}
 			}
 		} catch (ClassNotFoundException e) {
@@ -190,7 +175,7 @@ public class Access {
 	}
 
 	static void addTripOffering(int myTripNumber, String mydate, String myschStartTime, String myschArrivalTime,
-			String myDriverID, String myBusID) {
+			String myDriverName, String myBusID) {
 		try {
 			// Load the UCanAccess driver
 			Class.forName("net.ucanaccess.jdbc.UcanaccessDriver");
@@ -204,13 +189,13 @@ public class Access {
 			java.util.Date parsedUtilDate = sdf.parse(mydate);
 			Date sqlDate = new Date(parsedUtilDate.getTime());
 
-			String sqlTripOffering = "INSERT INTO TripOffering (TripNumber, TripDate, ScheduledStartTime, ScheduledArrivalTime, DriverID, BusID) VALUES (?, ?, ?, ?, ?, ?)";
+			String sqlTripOffering = "INSERT INTO TripOffering (TripNumber, TripDate, ScheduledStartTime, ScheduledArrivalTime, DriverName, BusID) VALUES (?, ?, ?, ?, ?, ?)";
 			try (PreparedStatement pstmt = connection.prepareStatement(sqlTripOffering)) {
 				pstmt.setInt(1, myTripNumber);
 				pstmt.setDate(2, sqlDate);
 				pstmt.setString(3, myschStartTime);
 				pstmt.setString(4, myschArrivalTime);
-				pstmt.setString(5, myDriverID);
+				pstmt.setString(5, myDriverName);
 				pstmt.setString(6, myBusID);
 				int rowsAffected = pstmt.executeUpdate();
 				System.out.println("Inserted " + rowsAffected + " row(s) into the TripOffering table.");
@@ -218,6 +203,33 @@ public class Access {
 		} catch (ClassNotFoundException e) {
 			System.out.println("UCanAccess driver not found: " + e.getMessage());
 		} catch (SQLException | ParseException e) {
+			e.printStackTrace();
+		}
+	}
+
+	static void changeDriver(int myTripNumber, String myDate, String mySchStartTime) {
+		try {
+			Class.forName("net.ucanaccess.jdbc.UcanaccessDriver");
+			Connection connection = DriverManager.getConnection(databaseURL);
+			System.out.println("Connected to the MS Access database");
+			System.out.println(
+					"Change Driver for TripNumber:" + myTripNumber + " on " + myDate + " at " + mySchStartTime);
+
+			String sqlTripOffering = "SELECT * FROM TripOffering WHERE TripNumber = ? AND TripDate = ? AND ScheduledStartTime = ?";
+			try (PreparedStatement pstmt = connection.prepareStatement(sqlTripOffering)) {
+				pstmt.setInt(1, myTripNumber);
+				pstmt.setString(2, myDate);
+				pstmt.setString(3, mySchStartTime);
+				try (ResultSet rs = pstmt.executeQuery()) {
+					while (rs.next()) {
+						String driverName = rs.getString("DriverName");
+						System.out.println("Current DriverID: " + driverName);
+					}
+				}
+			}
+		} catch (ClassNotFoundException e) {
+			System.out.println("UCanAccess driver not found: " + e.getMessage());
+		} catch (SQLException e) {
 			e.printStackTrace();
 		}
 	}
@@ -244,12 +256,13 @@ public class Access {
 				System.out.println("Deleted " + rowsAffected1 + " row(s) from the TripOffering table.");
 			}
 
-			String sqlTrip = "DELETE FROM Trip WHERE TripNumber = ?";
-			try (PreparedStatement pstmt2 = connection.prepareStatement(sqlTrip)) {
-				pstmt2.setInt(1, myTripNumber);
-				int rowsAffected2 = pstmt2.executeUpdate();
-				System.out.println("Deleted " + rowsAffected2 + " row(s) from the Trip table.");
-			}
+			// String sqlTrip = "DELETE FROM Trip WHERE TripNumber = ?";
+			// try (PreparedStatement pstmt2 = connection.prepareStatement(sqlTrip)) {
+			// pstmt2.setInt(1, myTripNumber);
+			// int rowsAffected2 = pstmt2.executeUpdate();
+			// System.out.println("Deleted " + rowsAffected2 + " row(s) from the Trip
+			// table.");
+			// }
 		} catch (ClassNotFoundException e) {
 			System.out.println("UCanAccess driver not found: " + e.getMessage());
 		} catch (SQLException | ParseException e) {
