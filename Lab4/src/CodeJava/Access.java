@@ -12,15 +12,6 @@ import java.text.ParseException;
 import java.util.Scanner;
 
 /*
- * Personal Notes:
- * Run from Lab4
- * javac src/CodeJava/Access.java
- * java -cp src CodeJava.Access
- * 
- * javac -cp "src/libs/ucanaccess-5.0.1.jar;src/libs/jackcess-3.3.0.jar;src/libs/commons-lang3-3.12.0.jar;src/libs/commons-logging-1.2.jar;src/libs/hsqldb.jar" src/CodeJava/Access.java
- * 
- * java -cp "src/libs/ucanaccess-5.0.1.jar;src/libs/jackcess-3.3.0.jar;src/libs/commons-lang3-3.12.0.jar;src/libs/commons-logging-1.2.jar;src/libs/hsqldb.jar;src" CodeJava.Access
- * 
  * Best way to run:
  * javac -cp "src/libs/*;src" src/CodeJava/Access.java
  * java -cp "src/libs/*;src" CodeJava.Access
@@ -46,6 +37,8 @@ public class Access {
 		// displayTripOffering();
 		// Part 3: Add a set of trip offerings assuming the values of all attributes
 		// (software asks if you have more trips to enter)
+		// addMultipleTripOfferings();
+		// displayTripOffering();
 
 		// displayTripOfferings();
 		// addTripOffering(1, "4/10/2025", "2:00PM", "3:00PM", "Driver1", "1");
@@ -74,8 +67,8 @@ public class Access {
 		// Task 7 Delete a bus
 		// deleteBus("1", "Volvo 9700", 2019); works
 
-		// Add a set of trip offerings assuming the values of all attributes are given
-		// (software asks if you have more trips to enter)
+		// Task 8 Insert actual trip data
+		insertActualTripData(1, "4/10/2025", "2:00PM", 1, "2:30PM", "2:35PM", "2:40PM", 5, 3);
 	}
 
 	// inner join TripOffering (for ScheduledStartTime, ScheduledArrivalTime,
@@ -266,6 +259,38 @@ public class Access {
 		}
 	}
 
+	public static void addMultipleTripOfferings() {
+		Scanner scanner = new Scanner(System.in);
+		String choice;
+		do {
+			System.out.println("Enter Trip Number:");
+			int tripNumber = scanner.nextInt();
+			scanner.nextLine(); // Consume newline
+
+			System.out.println("Enter Trip Date (M/d/yyyy):");
+			String tripDate = scanner.nextLine();
+
+			System.out.println("Enter Scheduled Start Time:");
+			String scheduledStartTime = scanner.nextLine();
+
+			System.out.println("Enter Scheduled Arrival Time:");
+			String scheduledArrivalTime = scanner.nextLine();
+
+			System.out.println("Enter Driver Name:");
+			String driverName = scanner.nextLine();
+
+			System.out.println("Enter Bus ID:");
+			String busID = scanner.nextLine();
+
+			addTripOffering(tripNumber, tripDate, scheduledStartTime, scheduledArrivalTime, driverName, busID);
+
+			System.out.println("Do you want to add another trip offering? (yes/no)");
+			choice = scanner.nextLine();
+		} while (choice.equalsIgnoreCase("yes"));
+
+		scanner.close();
+	}
+
 	public static void changeDriver(int myTripNumber, String myDate, String mySchStartTime, String newName) {
 		try {
 			Class.forName("net.ucanaccess.jdbc.UcanaccessDriver");
@@ -422,6 +447,39 @@ public class Access {
 		} catch (ClassNotFoundException e) {
 			System.out.println("UCanAccess driver not found: " + e.getMessage());
 		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+	}
+
+	public static void insertActualTripData(int tripNumber, String tripDate, String schStartTime, int stopNumber,
+			String schArrivalTime, String actArrivalTime, String actDepartTime, int numberOfPassengersIn,
+			int numberOfPassengersOut) {
+		try {
+			Class.forName("net.ucanaccess.jdbc.UcanaccessDriver");
+			Connection connection = DriverManager.getConnection(databaseURL);
+			System.out.println("Connected to the MS Access database");
+
+			SimpleDateFormat sdf = new SimpleDateFormat("M/d/yyyy");
+			java.util.Date parsedUtilDate = sdf.parse(tripDate);
+			Date sqlDate = new Date(parsedUtilDate.getTime());
+
+			String sqlActualTripStop = "INSERT INTO ActualTripStopInfo (TripNumber, TripDate, ScheduledStartTime, StopNumber, ScheduledArrivalTime, ActualArrivalTime, ActualDepartureTime, NumberOfPassengersIn, NumberOfPassengersOut) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+			try (PreparedStatement pstmt = connection.prepareStatement(sqlActualTripStop)) {
+				pstmt.setInt(1, tripNumber);
+				pstmt.setDate(2, sqlDate);
+				pstmt.setString(3, schStartTime);
+				pstmt.setInt(4, stopNumber);
+				pstmt.setString(5, schArrivalTime);
+				pstmt.setString(6, actArrivalTime);
+				pstmt.setString(7, actDepartTime);
+				pstmt.setInt(8, numberOfPassengersIn);
+				pstmt.setInt(9, numberOfPassengersOut);
+				int rowsAffected = pstmt.executeUpdate();
+				System.out.println("Inserted " + rowsAffected + " row(s) into the TripOffering table.");
+			}
+		} catch (ClassNotFoundException e) {
+			System.out.println("UCanAccess driver not found: " + e.getMessage());
+		} catch (SQLException | ParseException e) {
 			e.printStackTrace();
 		}
 	}
