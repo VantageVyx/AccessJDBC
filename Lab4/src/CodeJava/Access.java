@@ -48,7 +48,8 @@ public class Access {
 		// displayTripOfferings();
 		// Part 2: Delete a trip offering and its associated trip // works
 		deleteTripOffering(1, "4/10/2025", "2:00PM");
-
+		
+		
 		// Part 4: Change the driver for a given trip offering
 		displayTripOfferings();
 		changeDriver(1, "4/18/2025", "10:00AM", "John Doe");
@@ -60,7 +61,10 @@ public class Access {
 		displayTripOfferings();
 		changeBus(1, "4/18/2025", "10:00AM", 14);
 		displayTripOfferings();
+		//Task 4: display the weekly schedule of a driver given a date
+		displayWeeklySchedule("Arnold Palmer", "4/18/2025");
 
+		
 		// Task 5 Add a Drive
 		displayDrivers();
 		addDriver("Jaden Smith", "909-555-1234");
@@ -542,6 +546,44 @@ public class Access {
 	catch (SQLException e) {
 	e.printStackTrace();
     }
+}
+
+	public static void displayWeeklySchedule(String myDriverName, String myStringDate ) {
+	try {
+		Date myDate = convertToDate(myStringDate);
+		
+		Connection connection = DriverManager.getConnection(databaseURL);
+		LocalDate localDate = myDate.toLocalDate();
+		LocalDate weekStart = localDate.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
+		LocalDate weekEnd = localDate.with(TemporalAdjusters.nextOrSame(DayOfWeek.SUNDAY));
+		//converting back to Date objects for the sql comparison
+		Date startDate = Date.valueOf(weekStart);
+		Date endDate = Date.valueOf(weekEnd);
+		
+		try(PreparedStatement pstmt = connection.prepareStatement("SELECT * FROM TripOffering "
+																+ "WHERE DriverName = ? AND TripDate BETWEEN ? AND ?")){
+			
+			System.out.println("Displaying the schedule of "+myDriverName +" during the week of "+myDate);
+			pstmt.setString(1, myDriverName);
+			pstmt.setDate(2, startDate);
+			pstmt.setDate(3, endDate);
+			
+			try(ResultSet rs = pstmt.executeQuery()){	
+				while(rs.next()) {
+					Date tripDate1 = rs.getDate("TripDate");
+					String schStartTime = rs.getString("ScheduledStartTime");
+					String schArrivalTime = rs.getString("ScheduledArrivalTime");
+					System.out.println("Tripdate:"+tripDate1+", Scheduled Start Time: "+schStartTime+", Scheduled Arrival Time:"+schArrivalTime);
+				}
+			}
+			}
+	}
+	 catch (ParseException e) {
+	    
+		return;
+	    } catch (SQLException e) {
+		e.printStackTrace();
+	    }
 }
 
 	
