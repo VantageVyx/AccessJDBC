@@ -23,7 +23,9 @@ import java.util.Scanner;
  */
 
 public class Access {
-	private static String databaseURL = "jdbc:ucanaccess://C:/Users/valde/Desktop/cs_classes/cs4350_pc/AccessJDBC/Lab4/src/Lab4Database.accdb";
+	// private static String databaseURL =
+	// "jdbc:ucanaccess://C:/Users/valde/Desktop/cs_classes/cs4350_pc/AccessJDBC/Lab4/src/Lab4Database.accdb";
+	private static String databaseURL = "jdbc:ucanaccess://C:/Users/valde/Desktop/CS classes/CS4350/AccessJDBC/Lab4/src/Lab4Database.accdb";
 
 	public static void main(String[] args) {
 		// Task 1
@@ -34,41 +36,44 @@ public class Access {
 		// displayStops(1);
 
 		// Task 2
-		// displayTripOffering();
 		// Part 3: Add a set of trip offerings assuming the values of all attributes
 		// (software asks if you have more trips to enter)
-		// addMultipleTripOfferings();
-		// displayTripOffering();
+		displayTripOfferings();
+		addMultipleTripOfferings();
+		displayTripOfferings();
 
 		// displayTripOfferings();
-		// addTripOffering(1, "4/10/2025", "2:00PM", "3:00PM", "Driver1", "1");
+		addTripOffering(1, "4/10/2025", "2:00PM", "3:00PM", "Driver1", "1");
 
 		// displayTripOfferings();
 		// Part 2: Delete a trip offering and its associated trip // works
-		// deleteTripOffering(1, "4/10/2025", "2:00PM");
-
-		// Convert the date
-		// displayTripOfferings();
-
-		// displayDrivers();
-
-		// displayBuses();
+		deleteTripOffering(1, "4/10/2025", "2:00PM");
 
 		// Part 4: Change the driver for a given trip offering
-		// changeDriver(1, "2025-04-18", "10:00AM", "John Doe"); // works
-		// changeDriver(1, "2025-04-18", "10:00AM", "Arnold Palmer"); // works
+		displayTripOfferings();
+		changeDriver(1, "4/18/2025", "10:00AM", "John Doe");
+		displayTripOfferings();
+		changeDriver(1, "4/18/2025", "10:00AM", "Arnold Palmer");
+		displayTripOfferings();
 
 		// Change bus for a given trip offering
-		// changeBus(1, "2025-04-18", "10:00AM", 7); //works
+		displayTripOfferings();
+		changeBus(1, "4/18/2025", "10:00AM", 14);
+		displayTripOfferings();
 
 		// Task 5 Add a Drive
-		// addDriver("James Madison", "909-844-9551"); // works
+		displayDrivers();
+		addDriver("Jaden Smith", "909-555-1234");
+		displayDrivers();
 
 		// Task 7 Delete a bus
-		// deleteBus("1", "Volvo 9700", 2019); works
+		displayBuses();
+		deleteBus("20", "Taurus", 2009);
+		displayBuses();
 
-		// Task 8 Insert actual trip data
-		insertActualTripData(1, "4/10/2025", "2:00PM", 1, "2:30PM", "2:35PM", "2:40PM", 5, 3);
+		// Task 8 Insert actual trip data // works
+		insertActualTripData(1, "4/10/2025", "2:00PM", 4, "3:00PM", "2:30PM",
+				"3:30PM", 10, 5, 1, "1Hr", "John Doe", "1");
 	}
 
 	// inner join TripOffering (for ScheduledStartTime, ScheduledArrivalTime,
@@ -452,8 +457,8 @@ public class Access {
 	}
 
 	public static void insertActualTripData(int tripNumber, String tripDate, String schStartTime, int stopNumber,
-			String schArrivalTime, String actArrivalTime, String actDepartTime, int numberOfPassengersIn,
-			int numberOfPassengersOut) {
+			String schArrivalTime, String actStartTime, String actArrivalTime, int numberOfPassengerIn,
+			int numberOfPassengerOut, int seqNumber, String drivingTime, String driverName, String busID) {
 		try {
 			Class.forName("net.ucanaccess.jdbc.UcanaccessDriver");
 			Connection connection = DriverManager.getConnection(databaseURL);
@@ -463,19 +468,44 @@ public class Access {
 			java.util.Date parsedUtilDate = sdf.parse(tripDate);
 			Date sqlDate = new Date(parsedUtilDate.getTime());
 
-			String sqlActualTripStop = "INSERT INTO ActualTripStopInfo (TripNumber, TripDate, ScheduledStartTime, StopNumber, ScheduledArrivalTime, ActualArrivalTime, ActualDepartureTime, NumberOfPassengersIn, NumberOfPassengersOut) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+			// System.out.println(sqlDate);
+
+			String sqlTripOffering = "INSERT INTO TripOffering (TripNumber, TripDate, ScheduledStartTime, ScheduledArrivalTime, DriverName, BusID) VALUES (?, ?, ?, ?, ?, ?)";
+			try (PreparedStatement pstmt = connection.prepareStatement(sqlTripOffering)) {
+				pstmt.setInt(1, tripNumber);
+				pstmt.setDate(2, sqlDate);
+				pstmt.setString(3, schStartTime);
+				pstmt.setString(4, schArrivalTime);
+				pstmt.setString(5, driverName);
+				pstmt.setString(6, busID);
+				int rowsAffected = pstmt.executeUpdate();
+				System.out.println("Inserted " + rowsAffected + " row(s) into the TripOffering table.");
+			}
+
+			// works and inserts
+			String sqlTripStopInfo = "INSERT INTO TripStopInfo (TripNumber, StopNumber, SequenceNumber, DrivingTime) VALUES (?, ?, ?, ?)";
+			try (PreparedStatement pstmt = connection.prepareStatement(sqlTripStopInfo)) {
+				pstmt.setInt(1, tripNumber);
+				pstmt.setInt(2, stopNumber);
+				pstmt.setInt(3, seqNumber);
+				pstmt.setString(4, drivingTime);
+				int rowsAffected = pstmt.executeUpdate();
+				System.out.println("Inserted " + rowsAffected + " row(s) into the TripStopInfo table.");
+			}
+
+			String sqlActualTripStop = "INSERT INTO ActualTripStopInfo (TripNumber, TripDate, ScheduledStartTime, StopNumber, ScheduledArrivalTime, ActualStartTime, ActualArrivalTime, NumberOfPassengerIn, NumberOfPassengerOut) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
 			try (PreparedStatement pstmt = connection.prepareStatement(sqlActualTripStop)) {
 				pstmt.setInt(1, tripNumber);
 				pstmt.setDate(2, sqlDate);
 				pstmt.setString(3, schStartTime);
 				pstmt.setInt(4, stopNumber);
 				pstmt.setString(5, schArrivalTime);
-				pstmt.setString(6, actArrivalTime);
-				pstmt.setString(7, actDepartTime);
-				pstmt.setInt(8, numberOfPassengersIn);
-				pstmt.setInt(9, numberOfPassengersOut);
+				pstmt.setString(6, actStartTime);
+				pstmt.setString(7, actArrivalTime);
+				pstmt.setInt(8, numberOfPassengerIn);
+				pstmt.setInt(9, numberOfPassengerOut);
 				int rowsAffected = pstmt.executeUpdate();
-				System.out.println("Inserted " + rowsAffected + " row(s) into the TripOffering table.");
+				System.out.println("Inserted " + rowsAffected + " row(s) into the ActualTripStopInfo table.");
 			}
 		} catch (ClassNotFoundException e) {
 			System.out.println("UCanAccess driver not found: " + e.getMessage());
