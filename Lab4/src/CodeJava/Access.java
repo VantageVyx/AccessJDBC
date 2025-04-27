@@ -65,7 +65,8 @@ public class Access {
 		displayDrivers();
 		addDriver("Jaden Smith", "909-555-1234");
 		displayDrivers();
-
+		//Task 6: Add a bus (note if you run the same cmd twice it will throw an error since you will have already added a bus of that primary key, and you can't have two buses of the same primary key)
+		addBus("32","TOY",1989);
 		// Task 7 Delete a bus
 		displayBuses();
 		deleteBus("20", "Taurus", 2009);
@@ -522,5 +523,27 @@ public class Access {
 		return new Date(parsedUtilDate.getTime());
 
 	}
+
+
+	public static void addBus(String myBusID, String myModel, int myModelYear) {
+	try {
+		Connection connection = DriverManager.getConnection(databaseURL);
+		try(PreparedStatement pstmt = connection.prepareStatement("INSERT INTO Bus (BusID, Model, modelYear) VALUES (?, ?, ?)")){
+			pstmt.setString(1, myBusID);
+			pstmt.setString(2, myModel);
+			pstmt.setInt(3, myModelYear);
+			int rowsAffected = pstmt.executeUpdate();  
+
+	    System.out.println("Inserted " + rowsAffected + " row(s) into Bus.");
+		}
+
+
+	}
+	catch (SQLException e) {
+	e.printStackTrace();
+    }
+}
+
+	
 
 }
