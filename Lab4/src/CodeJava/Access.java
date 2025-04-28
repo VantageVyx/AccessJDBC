@@ -3,12 +3,15 @@ package CodeJava;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.sql.Statement;
+import java.text.SimpleDateFormat;
+import java.time.DayOfWeek;
+import java.time.LocalDate;
+import java.time.temporal.TemporalAdjusters;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Date;
-import java.text.SimpleDateFormat;
 import java.text.ParseException;
-
 import java.util.Scanner;
 
 /*
@@ -48,8 +51,7 @@ public class Access {
 		// displayTripOfferings();
 		// Part 2: Delete a trip offering and its associated trip // works
 		deleteTripOffering(1, "4/10/2025", "2:00PM");
-		
-		
+
 		// Part 4: Change the driver for a given trip offering
 		displayTripOfferings();
 		changeDriver(1, "4/18/2025", "10:00AM", "John Doe");
@@ -61,16 +63,17 @@ public class Access {
 		displayTripOfferings();
 		changeBus(1, "4/18/2025", "10:00AM", 14);
 		displayTripOfferings();
-		//Task 4: display the weekly schedule of a driver given a date
+		// Task 4: display the weekly schedule of a driver given a date
 		displayWeeklySchedule("Arnold Palmer", "4/18/2025");
 
-		
 		// Task 5 Add a Drive
 		displayDrivers();
 		addDriver("Jaden Smith", "909-555-1234");
 		displayDrivers();
-		//Task 6: Add a bus (note if you run the same cmd twice it will throw an error since you will have already added a bus of that primary key, and you can't have two buses of the same primary key)
-		addBus("32","TOY",1989);
+		// Task 6: Add a bus (note if you run the same cmd twice it will throw an error
+		// since you will have already added a bus of that primary key, and you can't
+		// have two buses of the same primary key)
+		addBus("32", "TOY", 1989);
 		// Task 7 Delete a bus
 		displayBuses();
 		deleteBus("20", "Taurus", 2009);
@@ -528,64 +531,60 @@ public class Access {
 
 	}
 
-
 	public static void addBus(String myBusID, String myModel, int myModelYear) {
-	try {
-		Connection connection = DriverManager.getConnection(databaseURL);
-		try(PreparedStatement pstmt = connection.prepareStatement("INSERT INTO Bus (BusID, Model, modelYear) VALUES (?, ?, ?)")){
-			pstmt.setString(1, myBusID);
-			pstmt.setString(2, myModel);
-			pstmt.setInt(3, myModelYear);
-			int rowsAffected = pstmt.executeUpdate();  
+		try {
+			Connection connection = DriverManager.getConnection(databaseURL);
+			try (PreparedStatement pstmt = connection
+					.prepareStatement("INSERT INTO Bus (BusID, Model, modelYear) VALUES (?, ?, ?)")) {
+				pstmt.setString(1, myBusID);
+				pstmt.setString(2, myModel);
+				pstmt.setInt(3, myModelYear);
+				int rowsAffected = pstmt.executeUpdate();
 
-	    System.out.println("Inserted " + rowsAffected + " row(s) into Bus.");
+				System.out.println("Inserted " + rowsAffected + " row(s) into Bus.");
+			}
+
+		} catch (SQLException e) {
+			e.printStackTrace();
 		}
-
-
 	}
-	catch (SQLException e) {
-	e.printStackTrace();
-    }
-}
 
-	public static void displayWeeklySchedule(String myDriverName, String myStringDate ) {
-	try {
-		Date myDate = convertToDate(myStringDate);
-		
-		Connection connection = DriverManager.getConnection(databaseURL);
-		LocalDate localDate = myDate.toLocalDate();
-		LocalDate weekStart = localDate.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
-		LocalDate weekEnd = localDate.with(TemporalAdjusters.nextOrSame(DayOfWeek.SUNDAY));
-		//converting back to Date objects for the sql comparison
-		Date startDate = Date.valueOf(weekStart);
-		Date endDate = Date.valueOf(weekEnd);
-		
-		try(PreparedStatement pstmt = connection.prepareStatement("SELECT * FROM TripOffering "
-																+ "WHERE DriverName = ? AND TripDate BETWEEN ? AND ?")){
-			
-			System.out.println("Displaying the schedule of "+myDriverName +" during the week of "+myDate);
-			pstmt.setString(1, myDriverName);
-			pstmt.setDate(2, startDate);
-			pstmt.setDate(3, endDate);
-			
-			try(ResultSet rs = pstmt.executeQuery()){	
-				while(rs.next()) {
-					Date tripDate1 = rs.getDate("TripDate");
-					String schStartTime = rs.getString("ScheduledStartTime");
-					String schArrivalTime = rs.getString("ScheduledArrivalTime");
-					System.out.println("Tripdate:"+tripDate1+", Scheduled Start Time: "+schStartTime+", Scheduled Arrival Time:"+schArrivalTime);
+	public static void displayWeeklySchedule(String myDriverName, String myStringDate) {
+		try {
+			Date myDate = convertToDate(myStringDate);
+
+			Connection connection = DriverManager.getConnection(databaseURL);
+			LocalDate localDate = myDate.toLocalDate();
+			LocalDate weekStart = localDate.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
+			LocalDate weekEnd = localDate.with(TemporalAdjusters.nextOrSame(DayOfWeek.SUNDAY));
+			// converting back to Date objects for the sql comparison
+			Date startDate = Date.valueOf(weekStart);
+			Date endDate = Date.valueOf(weekEnd);
+
+			try (PreparedStatement pstmt = connection.prepareStatement("SELECT * FROM TripOffering "
+					+ "WHERE DriverName = ? AND TripDate BETWEEN ? AND ?")) {
+
+				System.out.println("Displaying the schedule of " + myDriverName + " during the week of " + myDate);
+				pstmt.setString(1, myDriverName);
+				pstmt.setDate(2, startDate);
+				pstmt.setDate(3, endDate);
+
+				try (ResultSet rs = pstmt.executeQuery()) {
+					while (rs.next()) {
+						Date tripDate1 = rs.getDate("TripDate");
+						String schStartTime = rs.getString("ScheduledStartTime");
+						String schArrivalTime = rs.getString("ScheduledArrivalTime");
+						System.out.println("Tripdate:" + tripDate1 + ", Scheduled Start Time: " + schStartTime
+								+ ", Scheduled Arrival Time:" + schArrivalTime);
+					}
 				}
 			}
-			}
-	}
-	 catch (ParseException e) {
-	    
-		return;
-	    } catch (SQLException e) {
-		e.printStackTrace();
-	    }
-}
+		} catch (ParseException e) {
 
-	
+			return;
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+	}
 
 }
