@@ -31,11 +31,11 @@ public class Access {
 
 	public static void main(String[] args) {
 		// Task 1
-		// System.out.println("Checking displaySchedule:");
-		// displaySchedule("Oakland", "Alameda", "4/18/2025");
+		System.out.println("Checking displaySchedule:");
+		displaySchedule("Oakland", "Alameda", "4/18/2025");
 
-		// System.out.println("Checking displayStops:");
-		// displayStops(1);
+		System.out.println("Checking displayStops:");
+		displayStops(1);
 
 		// Task 2
 		// Part 3: Add a set of trip offerings assuming the values of all attributes
